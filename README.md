@@ -1,6 +1,6 @@
 # Ts phaser bomb game
 
-Another university project that i'm being forced to do.
+a uni project that I am turning into a game about espionage
 
 ## Hey, what's this?
 
