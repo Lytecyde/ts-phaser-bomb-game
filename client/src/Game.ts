@@ -105,6 +105,8 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
     return { layer, map, tiles };
   };
 
+  
+
   const preload = () => {
     const scene = currentScene;
     scene.load.image(MAIN_TILES, "assets/tileset.png");
@@ -115,18 +117,22 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
       frameWidth: GameDimensions.playerWidth,
       frameHeight: GameDimensions.playerHeight
     });
-
-    [
+  
+    const gameAssets = new Map([
       [ASSETS.BOMB, "assets/bomb.png"],
       [ASSETS.EXPLOSION, "assets/explosion.png"],
       [ASSETS.BOMB_COUNT_POWERUP, "assets/bomb_count_powerup.png"],
       [ASSETS.BOMB_RANGE_POWERUP, "assets/bomb_range_powerup.png"]
-    ].forEach(([assetName, assetPath]) => {
+    ]
+    );
+    
+    for(let [assetName, assetPath] of gameAssets) {
+      console.log(assetPath);
       scene.load.spritesheet(assetName, assetPath, {
         frameWidth: GameDimensions.tileWidth,
         frameHeight: GameDimensions.tileHeight
       });
-    });
+    };
   };
 
   const applyPhysicsAndAnimations = (
