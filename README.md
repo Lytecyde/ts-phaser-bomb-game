@@ -1,6 +1,6 @@
-# Ts phaser bomb game
+# Ts phaser game
 
-a uni project that I am turning into a game about espionage
+a uni project by dudes G Rohden  and Cuchi that Lytecyde is turning into a game about espionage
 
 ## Hey, what's this?
 
