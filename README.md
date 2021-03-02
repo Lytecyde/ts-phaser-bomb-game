@@ -6,34 +6,9 @@ Another university project that i'm being forced to do.
 
 This is a server x client multiplayer (websocket) bomberman clone game.
 
-### Why only one class in the client?
-
-I'm making this to **work**, not to be maintanable/scalable, so yes, this is XGH
-
-```
-/**
- *              ,
- *             / \,,_  .'|
- *          ,{{| /}}}}/_.'            _____________________________________________
- *         }}}}` '{{'  '.            /                                             \
- *       {{{{{    _   ;, \          /            Ladies and Gentlemen,              \
- *    ,}}}}}}    /o`\  ` ;)        |                                                |
- *   {{{{{{   /           (        |                 this is ...                    |
- *   }}}}}}   |            \       |                                                |
- *  {{{{{{{{   \            \      |      _____     __  .-_'''-.   .---.  .---.     |
- *  }}}}}}}}}   '.__      _  |     |      \   _\   /  /'_( )_   \  |   |  |_ _|     |
- *  {{{{{{{{       /`._  (_\ /     |      .-./ ). /  '|(_ o _)|  ' |   |  ( ' )     |
- *   }}}}}}'      |    //___/   --=:      \ '_ .') .' . (_,_)/___| |   '-(_{;}_)    |
- *   `{{{{`       |     '--'       |     (_ (_) _) '  |  |  .-----.|      (_,_)     |
- *    }}}`                         |       /    \   \ '  \  '-   .'| _ _--.   |     |
- *                                 |       `-'`-'    \ \  `-'`   | |( ' ) |   |     |
- *                                 |      /  /   \    \ \        / (_{;}_)|   |     |
- *                                 |     '--'     '----' `'-...-'  '(_,_) '---'     |
- *                                 |                                               /
- *                                  \_____________________________________________/
- */
-```
-
+### Why the fork?
+i thought it would be perfect as a basis for creating a game about negotiation 
+and espionage.
 ### Okay, but how do i build it?
 
 First, you will need `node` and `npm`, after that you just download
