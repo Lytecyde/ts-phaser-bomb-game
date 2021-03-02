@@ -14,6 +14,7 @@ export const ANIMATIONS = {
 
 export const ASSETS = {
   PLAYER: "dude",
+  DED: "dead",
   BOMB: "bomb",
   EXPLOSION: "explosion",
   BOMB_COUNT_POWERUP: "bomb_count_powerup",
