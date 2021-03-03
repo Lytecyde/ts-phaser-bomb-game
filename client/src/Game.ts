@@ -113,21 +113,23 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
     scene.load.tilemapCSV(MAPS.BACKGROUND, "assets/map_background.csv");
     scene.load.tilemapCSV(MAPS.WALLS, "assets/map_walls.csv");
     scene.load.tilemapCSV(MAPS.BREAKABLES, "assets/map_breakables.csv");
+    scene.load.image(ASSETS.DED, "assets/ded.png");
     scene.load.spritesheet(ASSETS.PLAYER, "assets/dude.png", {
       frameWidth: GameDimensions.playerWidth,
       frameHeight: GameDimensions.playerHeight
     });
+
   
     const gameAssets = new Map([
       [ASSETS.BOMB, "assets/bomb.png"],
       [ASSETS.EXPLOSION, "assets/explosion.png"],
+      [ASSETS.DED, "assets/ded.png"],
       [ASSETS.BOMB_COUNT_POWERUP, "assets/bomb_count_powerup.png"],
       [ASSETS.BOMB_RANGE_POWERUP, "assets/bomb_range_powerup.png"]
     ]
     );
     
     for(let [assetName, assetPath] of gameAssets) {
-      console.log(assetPath);
       scene.load.spritesheet(assetName, assetPath, {
         frameWidth: GameDimensions.tileWidth,
         frameHeight: GameDimensions.tileHeight
@@ -210,13 +212,15 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
   };
 
   const fabricPlayer = (
-    id: string,
-    directions: PlayerDirections
-  ): Phaser.Physics.Arcade.Sprite => {
+      id: string,
+      directions: PlayerDirections
+    ): Phaser.Physics.Arcade.Sprite => {
+    var playerAssetName = ASSETS.PLAYER;
+
     const player = currentScene.physics.add.sprite(
       directions.x,
       directions.y,
-      ASSETS.PLAYER,
+      playerAssetName,
       1
     );
 
@@ -285,7 +289,6 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
 
   const processPlayerDeath = (id: string) => {
     const registry = playerRegistry[id];
-
     // To not overload the server, only the player itself can say
     // that he/she was killed
     if (registry) {
@@ -320,9 +323,21 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
 
     socket.on(SocketEvents.PlayerDied, (playerId: string) => {
       const registry = playerRegistry[playerId];
+      var deadSpot = [ -1,  -1];
       if (registry) {
-        // registry.player.destroy(true);
-        // delete playerRegistry[playerId];
+        registry.player.destroy(true);
+        delete playerRegistry[playerId];
+        // display ded.png 
+        deadSpot = [registry.directions.x, registry.directions.y];
+        var playerAssetName = ASSETS.DED;
+
+      const player = currentScene.physics.add.sprite(
+        deadSpot[0], //x
+        deadSpot[1], //y
+        playerAssetName,
+        1
+      );
+      groups.addPlayer(player, playerId);
       }
     });
 
@@ -603,10 +618,12 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
 
   const explodeBombAt = (gridX: number, gridY: number) => {
     const key = makeKey({ x: gridX, y: gridY });
+    const player = getCurrentPlayer();
 
     if (hasBombAt({ x: gridX, y: gridY })) {
       const bomb = bombMap[key];
       bomb.sprite.destroy(true);
+      player;
       delete bombMap[key];
 
       putExplosionAt(gridX, gridY, bomb.range);
