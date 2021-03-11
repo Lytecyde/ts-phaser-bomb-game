@@ -11,13 +11,13 @@ i thought it would be perfect as a basis for creating a game about negotiation
 and espionage.
 ### Okay, but how do i build it?
 
-First, you will need `node` and `npm`, after that you just download
+First, you will need to download and install `node` and `npm`, after that you just download
 the project and run:
  * `npm install`
  * `npm run bootstrap`
  * `npm run start:fresh`
 
- After those, you can open the `localhost:5000` and enjoy your game :D
+ After those, you can open the `localhost:5000` on your browser and enjoy your game(s) :D
  
  ### Preview 
  

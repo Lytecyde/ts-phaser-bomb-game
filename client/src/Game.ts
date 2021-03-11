@@ -10,6 +10,7 @@ import {
   TPowerUpType
 } from "commons";
 import Phaser from "phaser";
+import { Update } from "./Update"; 
 import { ANIMATIONS, ASSETS, BOMB_TIME, MAIN_TILES, MAPS } from "./assets";
 import {
   GamePhysicsSprite,
@@ -24,6 +25,7 @@ import Socket = SocketIOClient.Socket;
 const debug = false;
 
 type ExplosionCache = Array<{ sprite: GameSprite; key: string }>;
+
 type BombMap = {
   [xy: string]: {
     sprite: GameSprite;
@@ -104,8 +106,8 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
 
     return { layer, map, tiles };
   };
-
   
+  //PRELOAD
 
   const preload = () => {
     const scene = currentScene;
@@ -130,10 +132,15 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
     );
     
     for(let [assetName, assetPath] of gameAssets) {
-      scene.load.spritesheet(assetName, assetPath, {
+      var frameDimensions = {
         frameWidth: GameDimensions.tileWidth,
         frameHeight: GameDimensions.tileHeight
-      });
+      };
+      scene.load.spritesheet(
+        assetName, 
+        assetPath, 
+        frameDimensions  
+      );
     };
   };
 
@@ -179,6 +186,8 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
     breakableMap = makeDefaultTileMap(MAPS.BREAKABLES, MAIN_TILES);
     breakableMap.map.setCollisionBetween(0, 2);
   };
+
+  //INIT
 
   const initPhaser = (state: BackendState & { id: string }) => {
     phaserInstance = new Phaser.Game({
@@ -302,6 +311,8 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
     }
   };
 
+  //SOCKET CODE
+
   const initSocketListeners = () => {
     socket.on(
       SocketEvents.NewPlayer,
@@ -331,13 +342,13 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
         deadSpot = [registry.directions.x, registry.directions.y];
         var playerAssetName = ASSETS.DED;
 
-      const player = currentScene.physics.add.sprite(
-        deadSpot[0], //x
-        deadSpot[1], //y
-        playerAssetName,
-        1
-      );
-      groups.addPlayer(player, playerId);
+        const player = currentScene.physics.add.sprite(
+          deadSpot[0], //x
+          deadSpot[1], //y
+          playerAssetName,
+          1
+        );
+        groups.addPlayer(player, playerId);
       }
     });
 
@@ -377,17 +388,23 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
     });
   };
 
+  // CREATE
+
   const create = (state: BackendState & { id: string }) => {
     makeMaps();
     initWithState(state);
     initSocketListeners();
     const scene = currentScene;
 
-    [
-      [ASSETS.BOMB, ANIMATIONS.BOMB_PULSE],
-      [ASSETS.BOMB_COUNT_POWERUP, ANIMATIONS.BOMB_COUNT],
-      [ASSETS.BOMB_RANGE_POWERUP, ANIMATIONS.BOMB_RANGE]
-    ].forEach(([assetName, animationKey]) => {
+    const bombAssets = new Map(
+      [
+        [ASSETS.BOMB, ANIMATIONS.BOMB_PULSE],
+        [ASSETS.BOMB_COUNT_POWERUP, ANIMATIONS.BOMB_COUNT],
+        [ASSETS.BOMB_RANGE_POWERUP, ANIMATIONS.BOMB_RANGE]
+      ]
+    );
+
+    for(let [assetName, animationKey] of bombAssets){
       scene.anims.create({
         key: animationKey,
         frames: scene.anims.generateFrameNumbers(assetName, {
@@ -397,15 +414,18 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
         frameRate: 2,
         repeat: -1
       });
-    });
+    };
 
     // Player animations
     scene.anims.create({
       key: ANIMATIONS.PLAYER_TURN_LEFT,
-      frames: scene.anims.generateFrameNumbers(ASSETS.PLAYER, {
-        start: 0,
-        end: 3
-      }),
+      frames: scene.anims.generateFrameNumbers(
+        ASSETS.PLAYER, 
+        {
+          start: 0,
+          end: 3
+        }
+      ),
       frameRate: 10,
       repeat: -1
     });
@@ -638,72 +658,10 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
     return makeKey(coords) in explosionMap;
   };
 
+  // UPDATE :: 
+
   const update = () => {
-    const scene = currentScene;
-
-    groups.playAnimations();
-
-    for (const [id, registry] of Object.entries(playerRegistry)) {
-      const { player, directions } = registry;
-
-      if (playerId === id) {
-        const cursors = scene.input.keyboard.createCursorKeys();
-
-        if (playerRegistry[id].isDead) {
-          Object.assign(directions, {
-            left: false,
-            right: false,
-            down: false,
-            up: false,
-            x: player.x,
-            y: player.y
-          });
-        } else {
-          Object.assign(directions, {
-            left: cursors.left!.isDown,
-            right: cursors.right!.isDown,
-            down: cursors.up!.isDown,
-            up: cursors.down!.isDown,
-            x: player.x,
-            y: player.y
-          });
-        }
-
-        // BombGame.applyPhysicsAndAnimations(player, directions);
-
-        if (cursors.space!.isDown) {
-          const { x, y } = findPlayerMapPosition(player);
-          if (!hasBombAt({ x, y })) {
-            setupPlayerBombAt(x, y);
-          }
-        }
-      }
-      // Fixes some position imprecision (from player animations)
-      const tolerance = 10;
-      const isXOk = inRange({
-        min: directions.x - tolerance,
-        max: directions.x + tolerance,
-        value: player.x
-      });
-      const isYOk = inRange({
-        min: directions.y - tolerance,
-        max: directions.y + tolerance,
-        value: player.y
-      });
-
-      if (!isXOk || !isYOk) {
-        player.x = directions.x;
-        player.y = directions.y;
-      } else {
-        applyPhysicsAndAnimations(player, directions);
-      }
-    }
-
-    // Update server
-    const player = playerRegistry[playerId];
-    if (player) {
-      socket.emit(SocketEvents.Movement, player.directions);
-    }
+    Update(groups, playerRegistry, playerId, currentScene);
   };
 
   const getPowerAsset = (type: TPowerUpType) => {
