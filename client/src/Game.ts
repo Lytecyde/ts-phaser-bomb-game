@@ -149,23 +149,32 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
     { left, right, down, up }: Directions
   ) => {
     const velocity = 160;
+    //TODO: remove all elses
     if (left) {
       sprite.setVelocityX(-velocity);
       sprite.anims.play(ANIMATIONS.PLAYER_TURN_LEFT, true);
-    } else if (right) {
+    } 
+    
+    if (right) {
       sprite.setVelocityX(velocity);
       sprite.anims.play(ANIMATIONS.PLAYER_TURN_RIGHT, true);
-    } else {
+    } 
+    
+    if (!left || !right){
       sprite.setVelocityX(0);
     }
 
     if (down) {
       sprite.setVelocityY(-velocity);
       sprite.anims.play(ANIMATIONS.PLAYER_TURN_DOWN, true);
-    } else if (up) {
+    } 
+    
+    if (up) {
       sprite.setVelocityY(velocity);
       sprite.anims.play(ANIMATIONS.PLAYER_TURN_UP, true);
-    } else {
+    } 
+    
+    if (!up || !down){
       sprite.setVelocityY(0);
     }
 
@@ -220,6 +229,7 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
     });
   };
 
+  //TODO: rename fabric
   const fabricPlayer = (
       id: string,
       directions: PlayerDirections
@@ -253,20 +263,31 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
     return player;
   };
 
+
+  //TODO: create 3 functions because initWithState does many things
   const initWithState = (state: BackendState & { id: string }) => {
     playerId = socket.id; // state.id;
     groups = new GroupManager(() => currentScene);
 
-    for (const [id, data] of Object.entries(state.playerRegistry)) {
-      playerRegistry[id] = {
-        ...data,
-        player: fabricPlayer(id, data.directions)
-      };
+    function addFabricPlayers(id: string) {
+      for (const [id, data] of Object.entries(state.playerRegistry)) {
+        playerRegistry[id] = {
+          ...data,
+          player: fabricPlayer(id, data.directions)
+        };
+      }
+    }
+    
+    addFabricPlayers(playerId);
+
+
+    function removeDestroyedWalls(state: BackendState) {
+      for (const { x, y } of state.destroyedWalls) {
+        breakableMap.map.removeTileAt(x, y);
+      }
     }
 
-    for (const { x, y } of state.destroyedWalls) {
-      breakableMap.map.removeTileAt(x, y);
-    }
+    removeDestroyedWalls(state);
 
     groups
       .registerBombCollider()
@@ -389,7 +410,7 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
   };
 
   // CREATE
-
+  //create  a map of objects with start and end numbers for each move
   const create = (state: BackendState & { id: string }) => {
     makeMaps();
     initWithState(state);
@@ -417,6 +438,7 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
     };
 
     // Player animations
+    //TODO: should be function
     scene.anims.create({
       key: ANIMATIONS.PLAYER_TURN_LEFT,
       frames: scene.anims.generateFrameNumbers(
@@ -494,6 +516,8 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
     return { key, sprite };
   };
 
+
+  //TODO: deal with the if structure
   const putAndExplodeAdjacent = (
     cache: ExplosionCache,
     gridX: number,
@@ -507,7 +531,7 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
       explodeBombAt(gridX, gridY);
       return true;
     } else if (hasExplosionAt({ x: gridX, y: gridY })) {
-      console.log(`Found a explosion at ${gridX} - ${gridY}, stopping`);
+      console.log(`Found an explosion at ${gridX} - ${gridY}, stopping`);
       return true;
     } else if (hasAnyWallAt(gridX, gridY)) {
       // No Explosions at walls
@@ -599,12 +623,11 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
     return playerRegistry[playerId];
   };
 
+  //TODO: DONE, refactor : remove else
   const setupPlayerBombAt = (x: number, y: number) => {
     const player = getCurrentPlayer();
-
-    if (spawnedBombCount >= player.status.maxBombCount || player.isDead) {
-      return;
-    } else {
+    const hasSufficientBombs = spawnedBombCount >= player.status.maxBombCount;
+    if (!(hasSufficientBombs || player.isDead)) {
       spawnedBombCount++;
       registerBombAt(x, y, player.status.bombRange);
       socket.emit(SocketEvents.NewBombAt, { x, y, ownerId: playerId });
@@ -613,7 +636,7 @@ export function BombGame(socket: Socket, gameConfigs: BombGameConfigs) {
         explodeBombAt(x, y);
         spawnedBombCount--;
       }, BOMB_TIME);
-    }
+    } 
   };
 
   const setupBombAt = ({ x, y, range }: TNewBombInfo) => {
